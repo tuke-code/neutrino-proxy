@@ -16,7 +16,7 @@
         <!--solon aot start（用于 aot 时注册 native 元信息）-->
         <dependency>
             <groupId>org.noear</groupId>
-            <artifactId>solon.aot</artifactId>
+            <artifactId>solon-aot</artifactId>
         </dependency>
         <!--solon aot end-->
 
@@ -34,6 +34,11 @@
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-cache</artifactId>
             <version>${hutool.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 
