@@ -9,6 +9,7 @@ import org.dromara.neutrinoproxy.client.util.UdpChannelBindInfo;
 import org.dromara.neutrinoproxy.core.ProxyMessage;
 
 import java.net.InetSocketAddress;
+import java.util.Date;
 
 /**
  * @author: aoshiguchen
@@ -36,6 +37,7 @@ public class UdpRealServerHandler extends SimpleChannelInboundHandler<DatagramPa
             );
 
             udpChannelBindInfo.getLockChannel().setResponseCount(udpChannelBindInfo.getLockChannel().getResponseCount() + 1);
+            udpChannelBindInfo.getLockChannel().setLastActiveTime(new Date());
         }
     }
 }
