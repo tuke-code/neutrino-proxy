@@ -105,6 +105,7 @@ public class UdpVisitorChannelHandler extends SimpleChannelInboundHandler<Datagr
                 .setServerPort(sa.getPort())
                 .setTargetIp(targetIp)
                 .setTargetPort(targetPort)
+                // connect消息没有传超时时间、响应数量，导致客户端日志输出的超时时间、响应数量都是0
         ));
     }
 
