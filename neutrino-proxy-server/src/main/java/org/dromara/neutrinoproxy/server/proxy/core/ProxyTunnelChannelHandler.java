@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.noear.solon.Solon;
 
 import java.net.InetSocketAddress;
+import java.net.SocketException;
 import java.util.Date;
 
 /**
@@ -108,6 +109,10 @@ public class ProxyTunnelChannelHandler extends SimpleChannelInboundHandler<Proxy
 //        if (ctx.channel().isActive()) {
 //            ctx.channel().close();
 //        }
+        if (cause instanceof SocketException && cause.getMessage().contains("Connection reset")) {
+            ctx.channel().close();
+            return;
+        }
         log.error("[Tunnel Channel] error", cause);
     }
 

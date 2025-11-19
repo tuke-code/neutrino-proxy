@@ -16,6 +16,7 @@ import org.dromara.neutrinoproxy.server.util.ProxyUtil;
 import org.noear.solon.Solon;
 
 import java.net.InetSocketAddress;
+import java.net.SocketException;
 
 /**
  *
@@ -27,8 +28,10 @@ public class TcpVisitorChannelHandler extends SimpleChannelInboundHandler<ByteBu
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        // 当出现异常就关闭连接
-        ctx.close();
+        if (cause instanceof SocketException && cause.getMessage().contains("Connection reset")) {
+            ctx.channel().close();
+            return;
+        }
         log.error("VisitorChannel error", cause);
     }
 

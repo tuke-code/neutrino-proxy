@@ -13,6 +13,8 @@ import io.netty.handler.timeout.IdleStateEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.noear.solon.Solon;
 
+import java.net.SocketException;
+
 /**
  * 处理与服务端之间的数据传输
  * @author: aoshiguchen
@@ -58,8 +60,11 @@ public class CmdChannelHandler extends SimpleChannelInboundHandler<ProxyMessage>
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        if (cause instanceof SocketException && cause.getMessage().contains("Connection reset")) {
+            ctx.channel().close();
+            return;
+        }
         log.error("[CMD Channel]Client CmdChannel Error channelId:{}", ctx.channel().id().asLongText(), cause);
-        ctx.close();
     }
 
     @Override

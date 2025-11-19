@@ -10,6 +10,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.SimpleChannelInboundHandler;
 
+import java.net.SocketException;
+
 /**
  * 处理与被代理客户端的数据传输
  * @author: aoshiguchen
@@ -76,6 +78,10 @@ public class RealServerChannelHandler extends SimpleChannelInboundHandler<ByteBu
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        if (cause instanceof SocketException && cause.getMessage().contains("Connection reset")) {
+            ctx.channel().close();
+            return;
+        }
         log.error("Client ProxyChannel Error", cause);
     }
 }

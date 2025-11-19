@@ -17,6 +17,7 @@ import org.dromara.neutrinoproxy.server.util.ProxyUtil;
 import org.noear.solon.Solon;
 
 import java.net.InetSocketAddress;
+import java.net.SocketException;
 
 /**
  * @author: aoshiguchen
@@ -116,8 +117,10 @@ public class UdpVisitorChannelHandler extends SimpleChannelInboundHandler<Datagr
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        // 当出现异常就关闭连接
-        ctx.close();
+        if (cause instanceof SocketException && cause.getMessage().contains("Connection reset")) {
+            ctx.channel().close();
+            return;
+        }
         log.error("[UDP Visitor Channel]VisitorChannel error", cause);
     }
 

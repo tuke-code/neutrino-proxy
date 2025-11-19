@@ -12,6 +12,8 @@ import org.dromara.neutrinoproxy.core.ProxyMessage;
 import org.dromara.neutrinoproxy.core.dispatcher.Dispatcher;
 import org.noear.solon.Solon;
 
+import java.net.SocketException;
+
 /**
  * 处理与服务端之间的数据传输
  * @author: aoshiguchen
@@ -53,8 +55,11 @@ public class UdpProxyChannelHandler extends SimpleChannelInboundHandler<ProxyMes
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        if (cause instanceof SocketException && cause.getMessage().contains("Connection reset")) {
+            ctx.channel().close();
+            return;
+        }
         log.error("[UDP Proxy Channel]Client ProxyChannel Error channelId:{}", ctx.channel().id().asLongText(), cause);
-        ctx.close();
     }
 
     @Override
