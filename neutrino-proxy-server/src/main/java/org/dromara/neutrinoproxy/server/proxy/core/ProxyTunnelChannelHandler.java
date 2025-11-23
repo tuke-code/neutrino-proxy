@@ -59,6 +59,13 @@ public class ProxyTunnelChannelHandler extends SimpleChannelInboundHandler<Proxy
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        {
+            // udp情况下不能使用visitorChannel上的visitorId，因为所有的用户都是走的同一个VisitorChannel
+            String visitorId = ctx.channel().attr(Constants.VISITOR_ID).get();
+            // 删除Udp的SocketAddress
+            ProxyUtil.removeSocketAddressByVisitorId(visitorId);
+        }
+
         Channel visitorChannel = ctx.channel().attr(Constants.NEXT_CHANNEL).get();
         if (null != visitorChannel) {
             Integer licenseId = ctx.channel().attr(Constants.LICENSE_ID).get();

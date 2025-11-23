@@ -13,6 +13,7 @@ import io.netty.channel.Channel;
 import io.netty.util.AttributeKey;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -72,6 +73,18 @@ public class ProxyUtil {
 	 * licenseId - 客户端Id映射
 	 */
 	private static Map<Integer, String> licenseIdToClientIdMap = new HashMap<>();
+    /**
+     * visitorId - SocketAddress映射
+     */
+    private static Map<String, SocketAddress> visitorIdToSocketAddressMap = new HashMap<>();
+    /**
+     * SocketAddress - visitorId 映射
+     */
+    private static Map<SocketAddress, String> socketAddressToVisitorIdMap = new HashMap<>();
+    /**
+     * visitorId - tunnelChannel 映射
+     */
+    private static Map<String, Channel> visitorIdToTunnelChannelMap = new HashMap<>();
 
 	/**
 	 * 初始化代理信息
@@ -479,4 +492,34 @@ public class ProxyUtil {
 	public static void removeClientIdByLicenseId(Integer licenseId) {
 		licenseIdToClientIdMap.remove(licenseId);
 	}
+
+    public static void setVisitorIdToSocketAddressMap(String visitorId, SocketAddress socketAddress) {
+        visitorIdToSocketAddressMap.put(visitorId, socketAddress);
+        socketAddressToVisitorIdMap.put(socketAddress, visitorId);
+    }
+
+    public static SocketAddress getSocketAddressByVisitorId(String visitorId) {
+        return visitorIdToSocketAddressMap.get(visitorId);
+    }
+
+    public static void removeSocketAddressByVisitorId(String visitorId) {
+        SocketAddress socketAddress = visitorIdToSocketAddressMap.get(visitorId);
+        visitorIdToSocketAddressMap.remove(visitorId);
+        socketAddressToVisitorIdMap.remove(socketAddress);
+
+        visitorIdToTunnelChannelMap.remove(visitorId);
+    }
+
+    public static String getVisitorIdBySocketAddress(SocketAddress socketAddress) {
+        return socketAddressToVisitorIdMap.get(socketAddress);
+    }
+
+    public static void setVisitorIdToTunnelChannelMap(String visitorId, Channel tunnelChannel) {
+        visitorIdToTunnelChannelMap.put(visitorId, tunnelChannel);
+    }
+
+    public static Channel getTunnelChannelByVisitorId(String visitorId) {
+        return visitorIdToTunnelChannelMap.get(visitorId);
+    }
+
 }

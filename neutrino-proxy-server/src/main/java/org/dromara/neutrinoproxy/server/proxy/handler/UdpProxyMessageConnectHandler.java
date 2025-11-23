@@ -87,7 +87,9 @@ public class UdpProxyMessageConnectHandler implements ProxyMessageHandler {
         ctx.channel().attr(Constants.TARGET_PORT).set(portMappingDO.getClientPort());
         ctx.channel().attr(Constants.PROXY_RESPONSES).set(portMappingDO.getProxyResponses());
         ctx.channel().attr(Constants.PROXY_TIMEOUT_MS).set(portMappingDO.getProxyTimeoutMs());
-        visitorChannel.attr(Constants.NEXT_CHANNEL).set(ctx.channel());
+        // 所有udb visitor共用一个visitorChannel，设置这个没啥用
+//        visitorChannel.attr(Constants.NEXT_CHANNEL).set(ctx.channel());
+        ProxyUtil.setVisitorIdToTunnelChannelMap(udpBaseInfo.getVisitorId(), ctx.channel());
         visitorChannel.attr(Constants.IS_UDP_KEY).set(Boolean.TRUE);
 //        // 代理客户端与后端服务器连接成功，修改用户连接为可读状态
 //        visitorChannel.config().setOption(ChannelOption.AUTO_READ, true);

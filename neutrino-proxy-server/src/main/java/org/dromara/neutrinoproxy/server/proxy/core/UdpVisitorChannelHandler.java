@@ -35,7 +35,12 @@ public class UdpVisitorChannelHandler extends SimpleChannelInboundHandler<Datagr
         datagramPacket.content().readBytes(bytes);
         datagramPacket.content().resetReaderIndex();
         ProxyAttachment proxyAttachment = new ProxyAttachment(ctx.channel(), bytes, (channel, buf) -> {
-            Channel proxyChannel = channel.attr(Constants.NEXT_CHANNEL).get();
+            String visitorId = ProxyUtil.getVisitorIdBySocketAddress(datagramPacket.sender());
+            if (StrUtil.isBlank(visitorId)) {
+                return;
+            }
+            Channel proxyChannel = ProxyUtil.getTunnelChannelByVisitorId(visitorId);
+//            Channel proxyChannel = channel.attr(Constants.NEXT_CHANNEL).get();
 
             if (null == proxyChannel) {
 //                // 该端口还没有代理客户端
@@ -50,7 +55,6 @@ public class UdpVisitorChannelHandler extends SimpleChannelInboundHandler<Datagr
             Long proxyTimeoutMs = proxyChannel.attr(Constants.PROXY_TIMEOUT_MS).get();
 
             // 转发代理数据
-            String visitorId = ProxyUtil.getVisitorIdByChannel(channel);
             proxyChannel.writeAndFlush(ProxyMessage.buildUdpTransferMessage(new ProxyMessage.UdpBaseInfo()
                     .setVisitorId(visitorId)
                     .setVisitorIp(datagramPacket.sender().getAddress().getHostAddress())
@@ -66,8 +70,9 @@ public class UdpVisitorChannelHandler extends SimpleChannelInboundHandler<Datagr
             Solon.context().getBean(FlowReportService.class).addWriteByte(visitorChannelAttachInfo.getLicenseId(), bytes.length);
         });
 
-        Channel proxyChannel = ctx.channel().attr(Constants.NEXT_CHANNEL).get();
-        if (null != proxyChannel && proxyChannel.isActive()) {
+        String visitorId = ProxyUtil.getVisitorIdBySocketAddress(datagramPacket.sender());
+        Channel proxyChannel = ProxyUtil.getTunnelChannelByVisitorId(visitorId);
+        if (StrUtil.isNotBlank(visitorId) && null != proxyChannel && proxyChannel.isActive()) {
             // UDP代理隧道已就绪，直接转发
             proxyAttachment.execute();
             return;
@@ -96,8 +101,10 @@ public class UdpVisitorChannelHandler extends SimpleChannelInboundHandler<Datagr
 //        // 用户连接到代理服务器时，设置用户连接不可读，等待代理后端服务器连接成功后再改变为可读状态
 //        visitorChannel.config().setOption(ChannelOption.AUTO_READ, false);
 
-        // TODO UDP此处叫visitor似有不妥，与TCP不同,2.x重构思考
-        String visitorId = ProxyUtil.newVisitorId();
+        // UDP场景下，一个visitorId并不对应一个visitorChannel，所有visitor共用一个visitorChannel
+        visitorId = ProxyUtil.newVisitorId();
+        // 设置udp发送方的地址
+        ProxyUtil.setVisitorIdToSocketAddressMap(visitorId, datagramPacket.sender());
         // 此处需要和tcp分开
         ProxyUtil.addVisitorChannelToCmdChannel(NetworkProtocolEnum.UDP, cmdChannel, visitorId, visitorChannel, sa.getPort());
         ProxyUtil.addProxyConnectAttachment(visitorId, proxyAttachment);
