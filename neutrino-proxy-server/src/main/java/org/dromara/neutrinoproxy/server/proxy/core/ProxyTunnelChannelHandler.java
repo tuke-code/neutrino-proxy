@@ -1,5 +1,6 @@
 package org.dromara.neutrinoproxy.server.proxy.core;
 
+import io.netty.handler.codec.DecoderException;
 import org.dromara.neutrinoproxy.core.Constants;
 import org.dromara.neutrinoproxy.core.ProxyMessage;
 import org.dromara.neutrinoproxy.core.dispatcher.Dispatcher;
@@ -17,6 +18,7 @@ import io.netty.handler.timeout.IdleStateEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.noear.solon.Solon;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.util.Date;
@@ -82,7 +84,7 @@ public class ProxyTunnelChannelHandler extends SimpleChannelInboundHandler<Proxy
             if (visitorChannel.isActive() && null == isUdp) {
                 // 数据发送完成后再关闭连接，解决http1.0数据传输问题
                 visitorChannel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
-                visitorChannel.close();
+                // visitorChannel.close();
             }
         } else {
             CmdChannelAttachInfo cmdChannelAttachInfo = ProxyUtil.getAttachInfo(ctx.channel());
@@ -112,15 +114,29 @@ public class ProxyTunnelChannelHandler extends SimpleChannelInboundHandler<Proxy
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-//        super.exceptionCaught(ctx, cause);
-//        if (ctx.channel().isActive()) {
-//            ctx.channel().close();
-//        }
-        if (cause instanceof SocketException && cause.getMessage().contains("Connection reset")) {
-            ctx.channel().close();
-            return;
+        // 对于网络IO异常（致命异常），关闭channel以防止资源泄漏
+        // 对于其他异常（可能是可恢复的业务异常），只记录日志
+        if (cause instanceof IOException) {
+            // IOException及其子类（包括SocketException）都是致命的网络异常
+            if (cause instanceof SocketException && cause.getMessage() != null && cause.getMessage().contains("Connection reset")) {
+                // Connection reset是常见的客户端断开，使用debug级别
+                log.debug("[Tunnel Channel] Connection reset: {}", cause.getMessage());
+            } else {
+                log.error("[Tunnel Channel] IO error", cause);
+            }
+            if (ctx.channel().isActive()) {
+                ctx.channel().close();
+            }
+        } else if(cause instanceof DecoderException) {
+            // 协议解析错误，为防止数据污染，立即关闭
+            log.debug("[Tunnel Channel] decoder error: {}", cause.getMessage());
+            if (ctx.channel().isActive()) {
+                ctx.channel().close();
+            }
+        } else {
+            // 其他异常只记录日志，不关闭channel，让Netty自己处理
+            log.error("[Tunnel Channel] error", cause);
         }
-        log.error("[Tunnel Channel] error", cause);
     }
 
     @Override

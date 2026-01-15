@@ -6,6 +6,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.DatagramPacket;
+import io.netty.handler.codec.DecoderException;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.neutrinoproxy.core.Constants;
 import org.dromara.neutrinoproxy.core.ProxyMessage;
@@ -16,6 +17,7 @@ import org.dromara.neutrinoproxy.server.service.FlowReportService;
 import org.dromara.neutrinoproxy.server.util.ProxyUtil;
 import org.noear.solon.Solon;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 
@@ -122,14 +124,32 @@ public class UdpVisitorChannelHandler extends SimpleChannelInboundHandler<Datagr
         super.channelActive(ctx);
     }
 
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        if (cause instanceof SocketException && cause.getMessage().contains("Connection reset")) {
-            ctx.channel().close();
-            return;
-        }
-        log.error("[UDP Visitor Channel]VisitorChannel error", cause);
-    }
+//    @Override
+//    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+//        // 对于网络IO异常（致命异常），关闭channel以防止资源泄漏
+//        // 对于其他异常（可能是可恢复的业务异常），只记录日志
+//        if (cause instanceof IOException) {
+//            // IOException及其子类（包括SocketException）都是致命的网络异常
+//            if (cause instanceof SocketException && cause.getMessage() != null && cause.getMessage().contains("Connection reset")) {
+//                // Connection reset是常见的客户端断开，使用debug级别
+//                log.debug("[UDP Visitor Channel] Connection reset: {}", cause.getMessage());
+//            } else {
+//                log.error("[UDP Visitor Channel] IO error", cause);
+//            }
+//            if (ctx.channel().isActive()) {
+//                ctx.channel().close();
+//            }
+//        } else if(cause instanceof DecoderException) {
+//            // 协议解析错误，为防止数据污染，立即关闭
+//            log.debug("[UDP Visitor Channel] decoder error: {}", cause.getMessage());
+//            if (ctx.channel().isActive()) {
+//                ctx.channel().close();
+//            }
+//        } else {
+//            // 其他异常只记录日志，不关闭channel，让Netty自己处理
+//            log.error("[UDP Visitor Channel] error", cause);
+//        }
+//    }
 
     @Override
     public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
