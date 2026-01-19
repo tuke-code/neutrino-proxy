@@ -91,8 +91,7 @@ public class ProxyTunnelServer implements EventListener<AppLoadEndEvent> {
 	}
 
 	private ChannelHandler createSslHandler() {
-		try {
-			InputStream jksInputStream = FileUtil.getInputStream(proxyConfig.getTunnel().getJksPath());
+		try (InputStream jksInputStream = FileUtil.getInputStream(proxyConfig.getTunnel().getJksPath())) {
 			SSLContext serverContext = SSLContext.getInstance("TLS");
 			final KeyStore ks = KeyStore.getInstance("JKS");
 
