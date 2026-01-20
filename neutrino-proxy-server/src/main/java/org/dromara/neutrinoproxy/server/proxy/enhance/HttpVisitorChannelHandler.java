@@ -9,7 +9,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.dromara.neutrinoproxy.core.Constants;
 import org.dromara.neutrinoproxy.core.ProxyMessage;
 import org.dromara.neutrinoproxy.server.constant.NetworkProtocolEnum;
-import org.dromara.neutrinoproxy.server.proxy.domain.ProxyAttachment;
 import org.dromara.neutrinoproxy.server.proxy.domain.VisitorChannelAttachInfo;
 import org.dromara.neutrinoproxy.server.service.FlowReportService;
 import org.dromara.neutrinoproxy.server.util.ProxyUtil;
@@ -31,7 +30,7 @@ public class HttpVisitorChannelHandler extends SimpleChannelInboundHandler<ByteB
         byte[] bytes = new byte[byteBuf.readableBytes()];
         byteBuf.readBytes(bytes);
         byteBuf.resetReaderIndex();
-        ProxyAttachment proxyAttachment = new ProxyAttachment(ctx.channel(), bytes, (channel, buf) -> {
+        Constants.ProxyAttachment proxyAttachment = new Constants.ProxyAttachment(bytes, (channel, buf) -> {
             Channel proxyChannel = channel.attr(Constants.NEXT_CHANNEL).get();
             if (null == proxyChannel) {
                 // 该端口还没有代理客户端
@@ -48,7 +47,7 @@ public class HttpVisitorChannelHandler extends SimpleChannelInboundHandler<ByteB
 
         String visitorId = ProxyUtil.getVisitorIdByChannel(ctx.channel());
         if (StringUtils.isNotBlank(visitorId)) {
-            proxyAttachment.execute();
+            proxyAttachment.execute(ctx.channel());
             return;
         }
 
@@ -71,7 +70,8 @@ public class HttpVisitorChannelHandler extends SimpleChannelInboundHandler<ByteB
 
         visitorId = ProxyUtil.newVisitorId();
         ProxyUtil.addVisitorChannelToCmdChannel(NetworkProtocolEnum.HTTP, cmdChannel, visitorId, ctx.channel(), serverPort);
-        ProxyUtil.addProxyConnectAttachment(visitorId, proxyAttachment);
+        // ProxyUtil.addProxyConnectAttachment(visitorId, proxyAttachment);
+        ctx.channel().attr(Constants.PROXY_CONNECT_ATTACHMENT).set(proxyAttachment);
         cmdChannel.writeAndFlush(ProxyMessage.buildConnectMessage(visitorId).setData(lanInfo.getBytes()));
     }
 

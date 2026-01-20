@@ -4,9 +4,9 @@ import cn.hutool.core.collection.CollectionUtil;
 import com.google.common.collect.Sets;
 import org.apache.commons.lang3.StringUtils;
 import org.dromara.neutrinoproxy.core.ChannelAttribute;
+import org.dromara.neutrinoproxy.core.Constants;
 import org.dromara.neutrinoproxy.server.constant.NetworkProtocolEnum;
 import org.dromara.neutrinoproxy.server.proxy.domain.CmdChannelAttachInfo;
-import org.dromara.neutrinoproxy.server.proxy.domain.ProxyAttachment;
 import org.dromara.neutrinoproxy.server.proxy.domain.ProxyMapping;
 import org.dromara.neutrinoproxy.server.proxy.domain.VisitorChannelAttachInfo;
 import io.netty.channel.Channel;
@@ -59,8 +59,10 @@ public class ProxyUtil {
 	private static AtomicLong visitorIdProducer = new AtomicLong(0);
 	/**
 	 * 代理 - connect附加映射
+     * （TCP/HTTP场景下，已优化不是用这个。UDP由于无连接，暂时还是要用这个）
+     * UDP场景时，需要记录最后读写时间，使用定时器定期检查，超时需要释放，待后续优化
 	 */
-	private static Map<String, ProxyAttachment> proxyConnectAttachmentMap = new HashMap<>();
+	private static Map<String, Constants.ProxyAttachment> proxyConnectAttachmentMap = new HashMap<>();
 	/**
 	 * 完整域名 - 服务端端口映射
 	 */
@@ -334,7 +336,7 @@ public class ProxyUtil {
 	 * @param visitorId
 	 * @param proxyAttachment
 	 */
-	public static void addProxyConnectAttachment(String visitorId, ProxyAttachment proxyAttachment) {
+	public static void addProxyConnectAttachment(String visitorId, Constants.ProxyAttachment proxyAttachment) {
 		proxyConnectAttachmentMap.put(visitorId, proxyAttachment);
 	}
 
@@ -343,7 +345,7 @@ public class ProxyUtil {
 	 * @param visitorId
 	 * @return
 	 */
-	public static ProxyAttachment getProxyConnectAttachment(String visitorId) {
+	public static Constants.ProxyAttachment getProxyConnectAttachment(String visitorId) {
 		return proxyConnectAttachmentMap.get(visitorId);
 	}
 
@@ -449,7 +451,7 @@ public class ProxyUtil {
 		if (StringUtils.isBlank(visitorId)) {
 			return;
 		}
-		ProxyAttachment proxyAttachment = ProxyUtil.getProxyConnectAttachment(visitorId);
+        Constants.ProxyAttachment proxyAttachment = ProxyUtil.getProxyConnectAttachment(visitorId);
 		if (null != proxyAttachment) {
 			tryClose(channel);
 		}

@@ -14,7 +14,6 @@ import org.dromara.neutrinoproxy.server.dal.PortMappingMapper;
 import org.dromara.neutrinoproxy.server.dal.entity.LicenseDO;
 import org.dromara.neutrinoproxy.server.dal.entity.PortMappingDO;
 import org.dromara.neutrinoproxy.server.dal.entity.UserDO;
-import org.dromara.neutrinoproxy.server.proxy.domain.ProxyAttachment;
 import org.dromara.neutrinoproxy.server.service.LicenseService;
 import org.dromara.neutrinoproxy.server.service.UserService;
 import org.dromara.neutrinoproxy.server.util.ProxyUtil;
@@ -94,11 +93,11 @@ public class UdpProxyMessageConnectHandler implements ProxyMessageHandler {
 //        // 代理客户端与后端服务器连接成功，修改用户连接为可读状态
 //        visitorChannel.config().setOption(ChannelOption.AUTO_READ, true);
         // 获取代理附加对象
-        ProxyAttachment proxyAttachment = ProxyUtil.getProxyConnectAttachment(udpBaseInfo.getVisitorId());
+        Constants.ProxyAttachment proxyAttachment = ProxyUtil.getProxyConnectAttachment(udpBaseInfo.getVisitorId());
         if (null != proxyAttachment) {
             // 及时释放
             ProxyUtil.remoteProxyConnectAttachment(udpBaseInfo.getVisitorId());
-            proxyAttachment.execute();
+            proxyAttachment.execute(visitorChannel);
         }
     }
 

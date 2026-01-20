@@ -7,7 +7,6 @@ import org.dromara.neutrinoproxy.core.dispatcher.Match;
 import org.dromara.neutrinoproxy.server.constant.EnableStatusEnum;
 import org.dromara.neutrinoproxy.server.dal.entity.LicenseDO;
 import org.dromara.neutrinoproxy.server.dal.entity.UserDO;
-import org.dromara.neutrinoproxy.server.proxy.domain.ProxyAttachment;
 import org.dromara.neutrinoproxy.server.service.LicenseService;
 import org.dromara.neutrinoproxy.server.service.UserService;
 import org.dromara.neutrinoproxy.server.util.ProxyUtil;
@@ -76,8 +75,18 @@ public class ProxyMessageConnectHandler implements ProxyMessageHandler {
 
 		Channel visitorChannel = ProxyUtil.getVisitorChannel(cmdChannel, visitorId);
 		if (null == visitorChannel) {
+            ctx.channel().writeAndFlush(ProxyMessage.buildErrMessage(ExceptionEnum.CONNECT_FAILED, "server error，visitor channel not found!"));
+            ctx.channel().close();
 			return;
 		}
+        // 获取代理附加对象
+        Constants.ProxyAttachment proxyAttachment = visitorChannel.attr(Constants.PROXY_CONNECT_ATTACHMENT).get();
+        if (null == proxyAttachment) {
+            ctx.channel().writeAndFlush(ProxyMessage.buildErrMessage(ExceptionEnum.CONNECT_FAILED, "server error，visitor channel proxy attachment not found!"));
+            ctx.channel().close();
+            visitorChannel.close();
+            return;
+        }
 		ctx.channel().attr(Constants.VISITOR_ID).set(visitorId);
 		ctx.channel().attr(Constants.LICENSE_ID).set(licenseDO.getId());
 		ctx.channel().attr(Constants.NEXT_CHANNEL).set(visitorChannel);
@@ -86,13 +95,16 @@ public class ProxyMessageConnectHandler implements ProxyMessageHandler {
         // 代理客户端与后端服务器连接成功，修改用户连接为可读状态
 		visitorChannel.config().setOption(ChannelOption.AUTO_READ, true);
 
-		// 获取代理附加对象
-		ProxyAttachment proxyAttachment = ProxyUtil.getProxyConnectAttachment(visitorId);
-		if (null != proxyAttachment) {
-			// 及时释放
-			ProxyUtil.remoteProxyConnectAttachment(visitorId);
-			proxyAttachment.execute();
-		}
+        // 转发来自visitor的首次代理数据
+        proxyAttachment.execute(visitorChannel);
+
+//		// 获取代理附加对象
+//		ProxyAttachment proxyAttachment = ProxyUtil.getProxyConnectAttachment(visitorId);
+//		if (null != proxyAttachment) {
+//			// 及时释放
+//			ProxyUtil.remoteProxyConnectAttachment(visitorId);
+//			proxyAttachment.execute();
+//		}
 	}
 
 	@Override

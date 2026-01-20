@@ -6,20 +6,16 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.DatagramPacket;
-import io.netty.handler.codec.DecoderException;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.neutrinoproxy.core.Constants;
 import org.dromara.neutrinoproxy.core.ProxyMessage;
 import org.dromara.neutrinoproxy.server.constant.NetworkProtocolEnum;
-import org.dromara.neutrinoproxy.server.proxy.domain.ProxyAttachment;
 import org.dromara.neutrinoproxy.server.proxy.domain.VisitorChannelAttachInfo;
 import org.dromara.neutrinoproxy.server.service.FlowReportService;
 import org.dromara.neutrinoproxy.server.util.ProxyUtil;
 import org.noear.solon.Solon;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketException;
 
 /**
  * @author: aoshiguchen
@@ -36,7 +32,7 @@ public class UdpVisitorChannelHandler extends SimpleChannelInboundHandler<Datagr
         byte[] bytes = new byte[datagramPacket.content().readableBytes()];
         datagramPacket.content().readBytes(bytes);
         datagramPacket.content().resetReaderIndex();
-        ProxyAttachment proxyAttachment = new ProxyAttachment(ctx.channel(), bytes, (channel, buf) -> {
+        Constants.ProxyAttachment proxyAttachment = new Constants.ProxyAttachment(bytes, (channel, buf) -> {
             String visitorId = ProxyUtil.getVisitorIdBySocketAddress(datagramPacket.sender());
             if (StrUtil.isBlank(visitorId)) {
                 return;
@@ -76,7 +72,7 @@ public class UdpVisitorChannelHandler extends SimpleChannelInboundHandler<Datagr
         Channel proxyChannel = ProxyUtil.getTunnelChannelByVisitorId(visitorId);
         if (StrUtil.isNotBlank(visitorId) && null != proxyChannel && proxyChannel.isActive()) {
             // UDP代理隧道已就绪，直接转发
-            proxyAttachment.execute();
+            proxyAttachment.execute(ctx.channel());
             return;
         }
 
