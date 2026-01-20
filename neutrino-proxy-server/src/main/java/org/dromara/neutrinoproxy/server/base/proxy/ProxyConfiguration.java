@@ -22,6 +22,7 @@ import org.dromara.neutrinoproxy.server.proxy.core.UdpVisitorChannelHandler;
 import org.dromara.neutrinoproxy.server.proxy.security.TcpVisitorSecurityChannelHandler;
 import org.dromara.neutrinoproxy.server.proxy.security.UdpVisitorSecurityChannelHandler;
 import org.dromara.neutrinoproxy.server.proxy.security.VisitorFlowLimiterChannelHandler;
+import org.dromara.neutrinoproxy.server.util.ProxyUtil;
 import org.noear.solon.Solon;
 import org.noear.solon.annotation.Bean;
 import org.noear.solon.annotation.Configuration;
@@ -46,6 +47,8 @@ public class ProxyConfiguration implements LifecycleBean {
                     null : ProxyDataTypeEnum.of((int)proxyMessage.getType()).getName());
 
         Solon.context().wrapAndPut(Dispatcher.class, dispatcher);
+
+        ProxyUtil.init();
     }
 
     @Bean("tcpServerBossGroup")

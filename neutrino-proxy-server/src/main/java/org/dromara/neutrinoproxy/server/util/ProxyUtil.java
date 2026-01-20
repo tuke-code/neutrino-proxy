@@ -6,16 +6,21 @@ import org.apache.commons.lang3.StringUtils;
 import org.dromara.neutrinoproxy.core.ChannelAttribute;
 import org.dromara.neutrinoproxy.core.Constants;
 import org.dromara.neutrinoproxy.server.constant.NetworkProtocolEnum;
+import org.dromara.neutrinoproxy.server.controller.res.stats.StatsInfoRes;
 import org.dromara.neutrinoproxy.server.proxy.domain.CmdChannelAttachInfo;
 import org.dromara.neutrinoproxy.server.proxy.domain.ProxyMapping;
 import org.dromara.neutrinoproxy.server.proxy.domain.VisitorChannelAttachInfo;
 import io.netty.channel.Channel;
 import io.netty.util.AttributeKey;
+import org.dromara.solonplugins.job.CustomThreadFactory;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -87,6 +92,46 @@ public class ProxyUtil {
      * visitorId - tunnelChannel 映射
      */
     private static Map<String, Channel> visitorIdToTunnelChannelMap = new HashMap<>();
+
+    /**
+     * cache扫描器
+     */
+    private static final ScheduledExecutorService cacheScanner = Executors.newSingleThreadScheduledExecutor(new CustomThreadFactory("cacheScanner"));
+
+
+    /**
+     * 初始化，启动一个定时器，定时清理缓存
+     */
+    public static void init() {
+        cacheScanner.scheduleWithFixedDelay(ProxyUtil::cacheScan, 5, 5, TimeUnit.SECONDS);
+    }
+
+    public static synchronized void cacheScan() {
+        for (Integer key : serverPortToCmdChannelMap.keySet()) {
+            Channel channel = serverPortToCmdChannelMap.get(key);
+            if (null == channel || !channel.isRegistered()) {
+                serverPortToCmdChannelMap.remove(key);
+            }
+        }
+        for (Integer key : licenseToCmdChannelMap.keySet()) {
+            Channel channel = licenseToCmdChannelMap.get(key);
+            if (null == channel || !channel.isRegistered()) {
+                licenseToCmdChannelMap.remove(key);
+            }
+        }
+        for (Integer key : serverPortToVisitorChannel.keySet()) {
+            Channel channel = serverPortToVisitorChannel.get(key);
+            if (null == channel || !channel.isRegistered()) {
+                serverPortToVisitorChannel.remove(key);
+            }
+        }
+        for (String key : visitorIdToTunnelChannelMap.keySet()) {
+            Channel channel = visitorIdToTunnelChannelMap.get(key);
+            if (null == channel || !channel.isRegistered()) {
+                visitorIdToTunnelChannelMap.remove(key);
+            }
+        }
+    }
 
 	/**
 	 * 初始化代理信息
@@ -522,6 +567,22 @@ public class ProxyUtil {
 
     public static Channel getTunnelChannelByVisitorId(String visitorId) {
         return visitorIdToTunnelChannelMap.get(visitorId);
+    }
+
+    public static StatsInfoRes.CacheInfo getCacheInfo() {
+        return new StatsInfoRes.CacheInfo()
+            .setProxyInfoMapSize(proxyInfoMap.size())
+            .setServerPortToCmdChannelMapSize(serverPortToCmdChannelMap.size())
+            .setLicenseToCmdChannelMapSize(licenseToCmdChannelMap.size())
+            .setServerPortToVisitorChannelMapSize(serverPortToVisitorChannel.size())
+            .setProxyConnectAttachmentMapSize(proxyConnectAttachmentMap.size())
+            .setFullDomainToServerPortMapSize(fullDomainToServerPortMap.size())
+            .setDomainToDomainNameIdMapSize(domainToDomainNameIdMap.size())
+            .setLicenseIdToClientIdMapSize(licenseIdToClientIdMap.size())
+            .setVisitorIdToSocketAddressMapSize(visitorIdToSocketAddressMap.size())
+            .setSocketAddressToVisitorIdMapSize(socketAddressToVisitorIdMap.size())
+            .setVisitorIdToTunnelChannelMapSize(visitorIdToTunnelChannelMap.size())
+            ;
     }
 
 }

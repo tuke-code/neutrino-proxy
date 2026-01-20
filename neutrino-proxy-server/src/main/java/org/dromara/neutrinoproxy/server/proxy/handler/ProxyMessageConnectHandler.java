@@ -79,14 +79,7 @@ public class ProxyMessageConnectHandler implements ProxyMessageHandler {
             ctx.channel().close();
 			return;
 		}
-        // 获取代理附加对象
-        Constants.ProxyAttachment proxyAttachment = visitorChannel.attr(Constants.PROXY_CONNECT_ATTACHMENT).get();
-        if (null == proxyAttachment) {
-            ctx.channel().writeAndFlush(ProxyMessage.buildErrMessage(ExceptionEnum.CONNECT_FAILED, "server error，visitor channel proxy attachment not found!"));
-            ctx.channel().close();
-            visitorChannel.close();
-            return;
-        }
+
 		ctx.channel().attr(Constants.VISITOR_ID).set(visitorId);
 		ctx.channel().attr(Constants.LICENSE_ID).set(licenseDO.getId());
 		ctx.channel().attr(Constants.NEXT_CHANNEL).set(visitorChannel);
@@ -95,8 +88,16 @@ public class ProxyMessageConnectHandler implements ProxyMessageHandler {
         // 代理客户端与后端服务器连接成功，修改用户连接为可读状态
 		visitorChannel.config().setOption(ChannelOption.AUTO_READ, true);
 
-        // 转发来自visitor的首次代理数据
-        proxyAttachment.execute(visitorChannel);
+
+        // 获取代理附加对象
+        Constants.ProxyAttachment proxyAttachment = visitorChannel.attr(Constants.PROXY_CONNECT_ATTACHMENT).get();
+        if (null != proxyAttachment) {
+            // 转发来自visitor的首次代理数据
+            proxyAttachment.execute(visitorChannel);
+
+            // 此处时TCP代理，不一定有代理附加对象，不能因为没有而直接释放visitorChannel
+        }
+
 
 //		// 获取代理附加对象
 //		ProxyAttachment proxyAttachment = ProxyUtil.getProxyConnectAttachment(visitorId);
