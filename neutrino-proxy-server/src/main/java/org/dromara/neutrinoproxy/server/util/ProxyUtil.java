@@ -28,16 +28,16 @@ import java.util.stream.Collectors;
  */
 public class ProxyUtil {
 	public static final AttributeKey<ChannelAttribute> CHANNEL_ATTR_KEY = AttributeKey.valueOf("netty.channel.attr");
-	/**
-	 * license -> 服务端口映射
-	 */
-	private static final Map<Integer, Set<Integer>> licenseToServerPortMap = new HashMap<>();
+//	/**
+//	 * license -> 服务端口映射
+//	 */
+//	private static final Map<Integer, Set<Integer>> licenseToServerPortMap = new HashMap<>();
 	/**
 	 * 代理信息映射 e.g.: 9104 -> 127.0.0.1:8848
 	 */
 	private static final Map<Integer, String> proxyInfoMap = new ConcurrentHashMap<>();
 	/**
-	 * 服务端口 -> 指令通道映射
+	 * 服务端口 -> 指令通道映射proxyInfoMap
 	 */
 	private static Map<Integer, Channel> serverPortToCmdChannelMap = new ConcurrentHashMap<>();
 	/**
@@ -92,14 +92,14 @@ public class ProxyUtil {
 	 * @param proxyMappingList 代理映射集合
 	 */
 	public static void initProxyInfo(Integer licenseId, List<ProxyMapping> proxyMappingList) {
-		licenseToServerPortMap.put(licenseId, new HashSet<>());
+//		licenseToServerPortMap.put(licenseId, new HashSet<>());
 		addProxyInfo(licenseId, proxyMappingList);
 	}
 
 	public static void addProxyInfo(Integer licenseId, List<ProxyMapping> proxyMappingList) {
 		if (!CollectionUtil.isEmpty(proxyMappingList)) {
 			for (ProxyMapping proxyMapping : proxyMappingList) {
-				licenseToServerPortMap.get(licenseId).add(proxyMapping.getServerPort());
+//				licenseToServerPortMap.get(licenseId).add(proxyMapping.getServerPort());
 				proxyInfoMap.put(proxyMapping.getServerPort(), proxyMapping.getLanInfo());
 			}
 		}
@@ -109,7 +109,7 @@ public class ProxyUtil {
 		if (null == licenseId || null == proxyMapping) {
 			return;
 		}
-		licenseToServerPortMap.get(licenseId).add(proxyMapping.getServerPort());
+//		licenseToServerPortMap.get(licenseId).add(proxyMapping.getServerPort());
 		proxyInfoMap.put(proxyMapping.getServerPort(), proxyMapping.getLanInfo());
 	}
 
@@ -117,14 +117,14 @@ public class ProxyUtil {
 		proxyInfoMap.remove(serverPort);
 	}
 
-	/**
-	 * 根据licenseId获取服务端端口集合
-	 * @param licenseId licenseId
-	 * @return 服务端端口集合
-	 */
-	public static Set<Integer> getServerPortsByLicenseKey(Integer licenseId) {
-		return licenseToServerPortMap.get(licenseId);
-	}
+//	/**
+//	 * 根据licenseId获取服务端端口集合
+//	 * @param licenseId licenseId
+//	 * @return 服务端端口集合
+//	 */
+//	public static Set<Integer> getServerPortsByLicenseKey(Integer licenseId) {
+//		return licenseToServerPortMap.get(licenseId);
+//	}
 
 	/**
 	 * 根据服务端端口获取客户端代理信息
