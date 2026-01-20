@@ -17,7 +17,6 @@ import org.dromara.neutrinoproxy.core.dispatcher.DefaultDispatcher;
 import org.dromara.neutrinoproxy.core.dispatcher.Dispatcher;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.nio.NioEventLoopGroup;
-import org.dromara.neutrinoproxy.server.proxy.core.BytesMetricsHandler;
 import org.dromara.neutrinoproxy.server.proxy.core.TcpVisitorChannelHandler;
 import org.dromara.neutrinoproxy.server.proxy.core.UdpVisitorChannelHandler;
 import org.dromara.neutrinoproxy.server.proxy.security.TcpVisitorSecurityChannelHandler;
@@ -75,7 +74,7 @@ public class ProxyConfiguration implements LifecycleBean {
             if (null != proxyConfig.getServer().getTcp().getTransferLogEnable() && proxyConfig.getServer().getTcp().getTransferLogEnable()) {
                 ch.pipeline().addFirst(new LoggingHandler(TcpVisitorChannelHandler.class));
             }
-            ch.pipeline().addFirst(new BytesMetricsHandler());
+//            ch.pipeline().addFirst(new BytesMetricsHandler());
 //            ch.pipeline().addLast(new ChannelTrafficShapingHandler(1024 * 1024 * 20, 1024 * 1024 * 20, 100, 20000));
             ch.pipeline().addLast(new TcpVisitorSecurityChannelHandler());
             ch.pipeline().addLast("flowLimiter", new VisitorFlowLimiterChannelHandler());
