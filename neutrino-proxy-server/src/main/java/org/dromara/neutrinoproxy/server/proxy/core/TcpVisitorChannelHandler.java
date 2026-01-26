@@ -157,6 +157,7 @@ public class TcpVisitorChannelHandler extends SimpleChannelInboundHandler<ByteBu
             Channel proxyChannel = visitorChannel.attr(Constants.NEXT_CHANNEL).get();
             if (null != proxyChannel) {
                 proxyChannel.config().setOption(ChannelOption.AUTO_READ, visitorChannel.isWritable());
+                // proxyChannel.config().setAutoRead(visitorChannel.isWritable());
             }
         }
 

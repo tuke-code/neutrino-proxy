@@ -54,6 +54,7 @@ public class ProxyTunnelChannelHandler extends SimpleChannelInboundHandler<Proxy
         Channel visitorChannel = ctx.channel().attr(Constants.NEXT_CHANNEL).get();
         if (visitorChannel != null) {
             visitorChannel.config().setOption(ChannelOption.AUTO_READ, ctx.channel().isWritable());
+            // visitorChannel.config().setAutoRead(ctx.channel().isWritable());
         }
 
         super.channelWritabilityChanged(ctx);
