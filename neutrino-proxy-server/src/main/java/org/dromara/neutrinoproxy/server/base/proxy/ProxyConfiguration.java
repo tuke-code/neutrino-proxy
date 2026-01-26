@@ -1,10 +1,9 @@
 package org.dromara.neutrinoproxy.server.base.proxy;
 
+import cn.hutool.core.util.StrUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.ChannelPipeline;
+import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -15,7 +14,6 @@ import org.dromara.neutrinoproxy.core.ProxyMessageHandler;
 import org.dromara.neutrinoproxy.core.aot.NeutrinoCoreRuntimeNativeRegistrar;
 import org.dromara.neutrinoproxy.core.dispatcher.DefaultDispatcher;
 import org.dromara.neutrinoproxy.core.dispatcher.Dispatcher;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.nio.NioEventLoopGroup;
 import org.dromara.neutrinoproxy.server.proxy.core.TcpVisitorChannelHandler;
 import org.dromara.neutrinoproxy.server.proxy.core.UdpVisitorChannelHandler;
@@ -69,6 +67,11 @@ public class ProxyConfiguration implements LifecycleBean {
                                               @Inject ProxyConfig proxyConfig
     ) {
         ServerBootstrap bootstrap = new ServerBootstrap();
+
+        WriteBufferWaterMark waterMark = proxyConfig.getWaterMark();
+        if (null != waterMark) {
+            bootstrap.childOption(ChannelOption.WRITE_BUFFER_WATER_MARK, waterMark);
+        }
         bootstrap.group(tcpServerBossGroup, tcpServerWorkerGroup)
             .channel(NioServerSocketChannel.class)
             .childHandler(new ChannelInitializer<SocketChannel>() {
